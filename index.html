@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CopyBot Chat Data Manager</title>
+
+<!-- Materialize CSS CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+<style>
+    .container {
+        margin-top: 50px;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .instructions {
+        margin-bottom: 20px;
+    }
+    .instructions p {
+        margin: 0 0 10px;
+    }
+    .success {
+        background-color: #e8f5e9;
+    }
+    .error-message {
+        background-color: #ffebee;
+    }
+    .toggle-password {
+        cursor: pointer;
+        color: #26a69a; 
+    }
+    .card {
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+   
+    #progress-bar {
+        width: 0;
+        height: 20px; 
+        background-color: green;
+    }
+    #progress-bar-container {
+        width: 100%; /* Set width to 100% to take full width */
+        border: 1px solid #000; /* Optional: adding a border to see the container */
+    }
+
+</style>
+
+    <!-- Materialize JS CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    
+    <script>
+        function validateFileSize() {
+            const files = document.getElementById('file').files;
+            let totalSize = 0;
+    
+            for (let i = 0; i < files.length; i++) {
+                totalSize += files[i].size;
+            }
+    
+            if (totalSize > 16777216) { // 16 MB in bytes
+                document.getElementById('error-message').textContent = 'The total size of the files exceeds the 16 MB limit. Please reduce the file size or select fewer files and try again.';
+                return false;
+            } else {
+                document.getElementById('error-message').textContent = '';
+                return true;
+            }
+        }
+            function confirmDelete() {
+                return confirm('Are you sure you want to delete this file?');
+            }
+        
+            function togglePasswordVisibility(inputId, toggleId) {
+                const input = document.getElementById(inputId);
+                const toggle = document.getElementById(toggleId);
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggle.textContent = 'Hide';
+                } else {
+                    input.type = 'password';
+                    toggle.textContent = 'Show';
+                }
+            }
+
+            function confirmProcess() {
+                return confirm('Are you sure you want to process the directory? This might take a while.');
+            }
+    
+            function startProgress() {
+                console.log("startProgress triggered");
+                var source = new EventSource('/progress');
+            
+                document.getElementById('progress-bar-container').style.display = 'block'; 
+            
+                source.onmessage = function(event) {
+                    var data = JSON.parse(event.data); 
+                    console.log('Progress: ' + data.progress + '%'); 
+                    document.getElementById('progress-bar').style.width = data.progress + '%'; 
+                    document.getElementById('progress-text').textContent = 'Operation Progress: ' + data.progress + '%'; 
+            
+                    if (data.progress === 100) {
+                        source.close();
+                        document.getElementById('progress-bar-container').style.display = 'none'; 
+                    }
+                };
+            }
+
+            
+            
+             
+</script>
+</head>
+<body>
+
+<div class="container">
+    <div class="instructions">
+        <h2>CopyBot</h2>
+        <h3> Chat Data Manager</h3>
+        <p>This page allows you to securely upload your PDF files to the CopyBot server. To do so, simply:</p>
+        <ul>
+            <li>Locate the upload form on this page.</li>
+            <li>Select your desired PDF file or files.</li>
+            <li>Ensure each file is in PDF format and is below the 16 MB size limit.</li>
+            <li>Click the "Upload" button to begin the transfer to our server.</li>
+            <li>Start your chat here: http://promptstitution.com:8000/ </li>
+        </ul>
+        <p>Thank you for using CopyBot!</p>
+        <p id="error-message" style="color: red; display: block;"></p>
+        <p id="success-message" style="color: green; display: none;"></p>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+            <div id="progress-text">0%</div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul class="flashes">
+        {% for category, message in messages %}
+        <li class="{{ category }}">
+            {% if category == 'success' %}
+            <p id="success-message" style="color: green;">{{ message }}</p>
+            {% else %}
+            <p id="error-message" style="color: red;">{{ message }}</p>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+    
+        
+    <div class="card">
+        <h3>Files Upload</h3>
+                <form action="/upload" method="post" id="upload-form" enctype="multipart/form-data" onsubmit="return validateFileSize() && startProgress();">
+            <div class="form-group">
+                <label for="upload_key"> Upload Key:</label>
+                <input type="text" name="upload_key" id="upload_key" placeholder="Enter your UPLOAD key here" required>
+                
+            </div>
+            <div class="form-group">
+                <label for="file">Select a PDF file:</label>
+                <input type="file" name="file" id="file" accept=".pdf" multiple required>
+            </div>
+            <input type="submit" value="Upload">
+        
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Process Embeddings</h3>
+            <form action="/process" method="post" id="process-form" onsubmit="return confirmProcess() && startProgress();">
+
+            <div class="form-group">
+                <label for="process_key">Process Key:</label>
+                <input type="text" name="process_key" id="process_key" placeholder="Enter your Embeddings key here" required>
+            </div>
+            <input type="submit" value="Process Directory">
+        
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Delete Files</h3>
+        <form action="/delete_files" method="post" onsubmit="return confirmDelete();">
+            <div class="form-group">
+                <label for="delete_key">Delete Key:</label>
+                <input type="password" name="delete_key" id="delete_key" placeholder="Enter DELETE key here" required>
+                <span class="toggle-password" onclick="togglePasswordVisibility('delete_key', 'toggle_delete');" id="toggle_delete">Show</span>
+            </div>
+            <ul>
+                {% for file in files %}
+                    <li>
+                        <label>
+                            <input type="checkbox" name="filenames[]" value="{{ file }}" />
+                            <span>{{ file }}</span>
+                        </label>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <input type="submit" value="Delete Selected">
+        </form>      
+    </div>
+    <div class="card">  
+        <h3>Destroy Embeddings</h3>
+        <form action="/delete_directory" method="post" onsubmit="return confirm('Are you sure you want to delete the entire directory? This cannot be undone.');">
+            <div class="form-group">
+                <label for="delete_directory_key">Delete Embeddings Key:</label>
+                <input type="password" name="delete_directory_key" id="delete_directory_key" placeholder="Enter DELETE Embeddings Directory key here" required>
+                <span class="toggle-password" onclick="togglePasswordVisibility('delete_directory_key', 'toggle_delete_directory');" id="toggle_delete_directory">Show</span>
+            </div>
+            <input type="submit" value="Destroy Embeddings">
+        </form>
+    </div>
+
+</div>
+    <!-- Materialize initialization script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            M.AutoInit();
+        });
+
+    </script>
+</div>
+
+</body>
+</html>

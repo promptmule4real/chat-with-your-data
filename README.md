@@ -104,7 +104,7 @@ The **CopyBot Chat Data Manager** is a user-friendly web portal that facilitates
 - **Progress Bar**: While uploading or processing, a progress bar displays the percentage of completion.
 
 #### **Starting a Chat**:
-To start chatting, use the provided link: [http://promptstitution.com:8000/](http://promptstitution.com:8000/).
+To start chatting, use the provided link: [http://prompt.com:8000/](http://prompt.com:8000/).
 
 #### **Technical Details**:
 - **Frontend**: The platform utilizes the Materialize CSS framework to ensure a responsive and modern design.

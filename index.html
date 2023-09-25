@@ -1,231 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CopyBot Chat Data Manager</title>
+    <head>
+        <meta name="description" content="ChatSnap Private Data Manager"/>
+        <meta name="keywords" content="Private Chatbot, LLM, Privacy"/>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>ChatSnap Private Data Manager</title>
+        <link rel="icon" type="image/ico" href="images/favico-16x16.ico"/>
 
-<!-- Materialize CSS CDN -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
 
-<style>
-    .container {
-        margin-top: 50px;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    .instructions {
-        margin-bottom: 20px;
-    }
-    .instructions p {
-        margin: 0 0 10px;
-    }
-    .success {
-        background-color: #e8f5e9;
-    }
-    .error-message {
-        background-color: #ffebee;
-    }
-    .toggle-password {
-        cursor: pointer;
-        color: #26a69a; 
-    }
-    .card {
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-   
-    #progress-bar {
-        width: 0;
-        height: 20px; 
-        background-color: green;
-    }
-    #progress-bar-container {
-        width: 100%; /* Set width to 100% to take full width */
-        border: 1px solid #000; /* Optional: adding a border to see the container */
-    }
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
-</style>
-
-    <!-- Materialize JS CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    
-    <script>
-        function validateFileSize() {
-            const files = document.getElementById('file').files;
-            let totalSize = 0;
-    
-            for (let i = 0; i < files.length; i++) {
-                totalSize += files[i].size;
+        <style>
+            body {
+                font-family: 'Roboto', sans-serif;
+                background-color: #f5f5f5;
             }
-    
-            if (totalSize > 16777216) { // 16 MB in bytes
-                document.getElementById('error-message').textContent = 'The total size of the files exceeds the 16 MB limit. Please reduce the file size or select fewer files and try again.';
-                return false;
-            } else {
-                document.getElementById('error-message').textContent = '';
-                return true;
+            .container {
+                margin-top: 50px;
+                padding: 20px;
             }
-        }
-            function confirmDelete() {
-                return confirm('Are you sure you want to delete this file?');
+            .card {
+                overflow: hidden;
             }
-        
-            function togglePasswordVisibility(inputId, toggleId) {
-                const input = document.getElementById(inputId);
-                const toggle = document.getElementById(toggleId);
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    toggle.textContent = 'Hide';
-                } else {
-                    input.type = 'password';
-                    toggle.textContent = 'Show';
-                }
+            .card-content {
+                padding: 24px;
+            }
+            .btn {
+                border-radius: 4px;
+                margin-top: 10px;
+            }
+            .start-chatsnap-form {
+                position: fixed;
+                top: 60px; /* Adjust based on the height of the .start-chatsnap-btn and desired spacing */
+                right: 10px;
+                z-index: 1000;
             }
 
-            function confirmProcess() {
-                return confirm('Are you sure you want to process the directory? This might take a while.');
-            }
-    
-            function startProgress() {
-                console.log("startProgress triggered");
-                var source = new EventSource('/progress');
-            
-                document.getElementById('progress-bar-container').style.display = 'block'; 
-            
-                source.onmessage = function(event) {
-                    var data = JSON.parse(event.data); 
-                    console.log('Progress: ' + data.progress + '%'); 
-                    document.getElementById('progress-bar').style.width = data.progress + '%'; 
-                    document.getElementById('progress-text').textContent = 'Operation Progress: ' + data.progress + '%'; 
-            
-                    if (data.progress === 100) {
-                        source.close();
-                        document.getElementById('progress-bar-container').style.display = 'none'; 
-                    }
-                };
+            .start-chatsnap-btn {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                z-index: 1001; /* Higher z-index to ensure it's above other elements */
+                background-color: #4CAF50; /* Materialize Green */
             }
 
-            
-            
-             
-</script>
-</head>
-<body>
+            .logout-button {
+                position: fixed;
+                top: 120px; /* Adjust based on the height of the .start-chatsnap-form and desired spacing */
+                right: 10px;
+                z-index: 1002; /* Highest z-index to ensure it's above other elements */
+            }
+        </style>
+    </head>
+    <body>
 
-<div class="container">
-    <div class="instructions">
-        <h2>CopyBot</h2>
-        <h3> Chat Data Manager</h3>
-        <p>This page allows you to securely upload your PDF files to the CopyBot server. To do so, simply:</p>
-        <ul>
-            <li>Locate the upload form on this page.</li>
-            <li>Select your desired PDF file or files.</li>
-            <li>Ensure each file is in PDF format and is below the 16 MB size limit.</li>
-            <li>Click the "Upload" button to begin the transfer to our server.</li>
-            <li>Start your chat here: http://promptstitution.com:8000/ </li>
-        </ul>
-        <p>Thank you for using CopyBot!</p>
-        <p id="error-message" style="color: red; display: block;"></p>
-        <p id="success-message" style="color: green; display: none;"></p>
+        <!-- Start ChatSnap Form -->
+        <form action="/secret-restart" method="post" onsubmit="return confirm('Are you sure you want to restart the service?');" class="start-chatsnap-form">
+            <div class="input-field">
+                <input type="password" name="restart_key" id="restart_key" placeholder="Enter ChatSnap key here" required/>
+                <label for="restart_key">Start Key:</label>
+                <span class="material-icons toggle-password" onclick="togglePasswordVisibility('restart_key', 'toggle_restart');" id="toggle_restart">visibility</span>
+            </div>
+            <button type="submit" class="btn waves-effect waves-light green start-chatsnap-btn">Start ChatSnap</button>
+        </form>
+
+        <!-- Auth Buttons -->
+        {% if current_user.is_authenticated %}
+            <a class="btn waves-effect waves-light red darken-2 logout-button" href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a class="btn waves-effect waves-light logout-button" href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+
+
+        <div class="container">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">ChatSnap Private Data Manager</span>
+                    <blockquote>
+                        <i>Where privacy comes first.</i>
+                    </blockquote>
+                    <p>This tool allows you to upload your files to ChatSnap. It's easy:</p>
+                    <ul>
+                        <li>1. Locate the upload form on this page.</li>
+                        <li>2. Select your desired PDF file or files.</li>
+                        <li>
+                            3. Ensure each file is in PDF format and is below the 16 MB size
+                                                                                                                                                                                                                                                                                                                                                    limit.
+                        </li>
+                        <li>
+                            4. Click the "Upload" button to begin the transfer to our server.
+                        </li>
+                        <li>
+                            5. Click the "Learn" button to let ChatSnap learn from your files
+                                                                                                                                                                                                                                                                                                                                                    before chatting.
+                        </li>
+                        <li>
+                            Afterwards, start your
+                            <a href="http://app.chatsnap.me:8000/" target="_blank">chat</a>
+                        </li>
+                        <li>
+                            You can also have ChatSnap Unlearn or just delete a file you don't
+                                                                                                                                                                                                                                                                                                                                                    want included in the learning process.
+                        </li>
+                    </ul>
+                    <p>Thank you for using ChatSnap!</p>
+                </div>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'success' %}
+                        <div class="success-message">{{ message }}</div>
+                    {% else %}
+                        <div class="error-message">{{ message }}</div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <!-- Cards (Upload, Learn, Start ChatSnap, Delete, Unlearn) Code Here -->
+            <div class="card">
+                <h4 class="card-title">Upload</h4>
+                <div class="card-content">
+                    <form
+                        action="/upload" method="post" id="upload-form" enctype="multipart/form-data" onsubmit="return validateFileSize() && startProgress();">
+                        <!-- Use Materialize CSS Class -->
+                        <div class="input-field">
+                            <input type="text" name="upload_key" id="upload_key" required/>
+                            <label for="upload_key">Upload Key</label>
+                        </div>
+                        <div class="form-group">
+                            <label for="file">Select a PDF file:</label>
+                            <input type="file" name="file" id="file" accept=".pdf" multiple required/>
+                        </div>
+
+                        <button type="submit" class="btn waves-effect waves-light">
+                            Upload
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 class="card-title">Learn</h4>
+                <div class="card-content">
+                    <form action="/process" method="post" id="process-form" onsubmit="return confirmProcess() && startProgress();">
+                        <div class="input-field">
+                            <input type="text" name="process_key" id="process_key" placeholder="Enter your Learn key here" required/>
+                            <label htmlfor="process_key">Learn Key:</label>
+                        </div>
+                        <List component="nav" aria-label="files in directory">
+                            {% for file in files %}
+                                <ListItem>
+                                    <ListItemText primary="{{ file }}"/>
+                                </ListItem>
+                                <Divider/>
+                            {% endfor %}
+                        </List>
+                        <button type="submit" class="btn waves-effect waves-light">
+                            Learn From Uploaded Files
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 class="card-title">Delete</h4>
+                <div class="card-content">
+                    <form action="/delete_files" method="post" onsubmit="return confirmDelete();">
+                        <div class="input-field">
+                            <input type="password" name="delete_key" id="delete_key" placeholder="Enter DELETE key here" required/>
+                            <label for="delete_key">Delete Key:</label>
+                            <span class="toggle-password" onclick="togglePasswordVisibility('delete_key', 'toggle_delete');" id="toggle_delete">Show</span>
+                        </div>
+                        <ul>
+                            {% for file in files %}
+                                <li>
+                                    <label>
+                                        <input type="checkbox" name="filenames[]" value="{{ file }}"/>
+                                        <span>{{ file }}</span>
+                                    </label>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <button type="submit" class="btn waves-effect waves-light">
+                            Delete Selected
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 class="card-title">Unlearn</h4>
+                <div class="card-content">
+                    <form action="/delete_directory" method="post" onsubmit="return confirm('Are you sure you want to Unlearn this session? This cannot be undone.');">
+                        <div class="input-field">
+                            <input type="password" name="delete_directory_key" id="delete_directory_key" placeholder="Enter UNLEARN key here" required/>
+                            <label for="delete_directory_key">Unlearn Key:</label>
+                            <span class="toggle-password" onclick="togglePasswordVisibility('delete_directory_key', 'toggle_delete_directory');" id="toggle_delete_directory">Show</span>
+                        </div>
+                        <button type="submit" class="btn waves-effect waves-light">
+                            UNLEARN
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
         <div id="progress-bar-container">
             <div id="progress-bar"></div>
             <div id="progress-text">0%</div>
         </div>
-    </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <ul class="flashes">
-        {% for category, message in messages %}
-        <li class="{{ category }}">
-            {% if category == 'success' %}
-            <p id="success-message" style="color: green;">{{ message }}</p>
-            {% else %}
-            <p id="error-message" style="color: red;">{{ message }}</p>
-            {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% endwith %}
-    
-        
-    <div class="card">
-        <h3>Files Upload</h3>
-                <form action="/upload" method="post" id="upload-form" enctype="multipart/form-data" onsubmit="return validateFileSize() && startProgress();">
-            <div class="form-group">
-                <label for="upload_key"> Upload Key:</label>
-                <input type="text" name="upload_key" id="upload_key" placeholder="Enter your UPLOAD key here" required>
-                
-            </div>
-            <div class="form-group">
-                <label for="file">Select a PDF file:</label>
-                <input type="file" name="file" id="file" accept=".pdf" multiple required>
-            </div>
-            <input type="submit" value="Upload">
-        
-        </form>
-    </div>
 
-    <div class="card">
-        <h3>Process Embeddings</h3>
-            <form action="/process" method="post" id="process-form" onsubmit="return confirmProcess() && startProgress();">
+        <script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+            <script>
+                // JavaScript functions here
+                function validateFileSize() {
+                    const files = document.getElementById("file").files;
+                    let totalSize = 0;
 
-            <div class="form-group">
-                <label for="process_key">Process Key:</label>
-                <input type="text" name="process_key" id="process_key" placeholder="Enter your Embeddings key here" required>
-            </div>
-            <input type="submit" value="Process Directory">
-        
-        </form>
-    </div>
+                    for (let i = 0; i < files.length; i++) {
+                        totalSize += files[i].size;
+                    }
 
-    <div class="card">
-        <h3>Delete Files</h3>
-        <form action="/delete_files" method="post" onsubmit="return confirmDelete();">
-            <div class="form-group">
-                <label for="delete_key">Delete Key:</label>
-                <input type="password" name="delete_key" id="delete_key" placeholder="Enter DELETE key here" required>
-                <span class="toggle-password" onclick="togglePasswordVisibility('delete_key', 'toggle_delete');" id="toggle_delete">Show</span>
-            </div>
-            <ul>
-                {% for file in files %}
-                    <li>
-                        <label>
-                            <input type="checkbox" name="filenames[]" value="{{ file }}" />
-                            <span>{{ file }}</span>
-                        </label>
-                    </li>
-                {% endfor %}
-            </ul>
+                    if (totalSize > 16777216) { // 16 MB in bytes
+                        document.getElementById("error-message").textContent = "The total size of the files exceeds the 16 MB limit. Please reduce the file size or select fewer files and try again.";
+                        return false;
+                    } else {
+                        document.getElementById("error-message").textContent = "";
+                        return true;
+                    }
+                }
+                function confirmDelete() {
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+                    if (checkboxes.length === 0) {
+                        alert("Please select at least one file to delete.");
+                        return false;
+                    }
+                    return confirm("Are you sure you want to delete the selected file(s)?");
+                }
 
-            <input type="submit" value="Delete Selected">
-        </form>      
-    </div>
-    <div class="card">  
-        <h3>Destroy Embeddings</h3>
-        <form action="/delete_directory" method="post" onsubmit="return confirm('Are you sure you want to delete the entire directory? This cannot be undone.');">
-            <div class="form-group">
-                <label for="delete_directory_key">Delete Embeddings Key:</label>
-                <input type="password" name="delete_directory_key" id="delete_directory_key" placeholder="Enter DELETE Embeddings Directory key here" required>
-                <span class="toggle-password" onclick="togglePasswordVisibility('delete_directory_key', 'toggle_delete_directory');" id="toggle_delete_directory">Show</span>
-            </div>
-            <input type="submit" value="Destroy Embeddings">
-        </form>
-    </div>
+                function togglePasswordVisibility(inputId, toggleId) {
+                    const input = document.getElementById(inputId);
+                    const toggle = document.getElementById(toggleId);
+                    if (input.type === "password") {
+                        input.type = "text";
+                        toggle.textContent = "Hide";
+                    } else {
+                        input.type = "password";
+                        toggle.textContent = "Show";
+                    }
+                }
+                function confirmProcess() {
+                    return confirm("Are you sure you want to Learn from the selected file(s)? This might take a while and the directory will be learned.");
+                }
 
-</div>
-    <!-- Materialize initialization script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            M.AutoInit();
-        });
+                function startProgress() {
+                    console.log("startProgress triggered");
+                    var source = new EventSource("/progress");
 
-    </script>
-</div>
+                    document.getElementById("progress-bar-container").style.display = "block";
 
-</body>
-</html>
+                    source.onmessage = function (event) {
+                        var data = JSON.parse(event.data);
+                        console.log("Progress: " + data.progress + "%");
+                        document.getElementById("progress-bar").style.width = data.progress + "%";
+                        document.getElementById("progress-text").textContent = "Operation Progress: " + data.progress + "%";
+
+                        if (data.progress === 100) {
+                            source.close();
+                            document.getElementById("progress-bar-container").style.display = "none";
+                        }
+                    };
+                }
+
+                document.addEventListener("DOMContentLoaded", function () {
+                    M.AutoInit();
+                });
+            </script>
+        </body>
+    </body>
+</html></body></html>

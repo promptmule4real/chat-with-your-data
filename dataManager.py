@@ -3,10 +3,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
-from werkzeug.utils import secure_filename
 import os
 import shutil
-from flask import url_for, stream_with_context, Response
 import time
 import json
 import logging
@@ -54,11 +52,15 @@ class User:
         self.id = id
         self.username = username
         self.password_hash = password_hash
-
-    def is_active(self):
-        return True
+        self._authenticated = False  # Set to False initially
 
     def is_authenticated(self):
+        return self._authenticated
+
+    def authenticate(self):  # Call this method when user logs in
+        self._authenticated = True
+
+    def is_active(self):
         return True
 
     def is_anonymous(self):
@@ -91,11 +93,13 @@ if not os.path.exists(app.config["UPLOAD_FOLDER"]):
 global_progress_state = {
     "status": "idle",  # Can be "idle", "in_progress", or "completed"
     "progress": 0,  # A percentage representing the progress of the task (0-100)
+
 }
 
-# app.config.from_object('config')  # Import configurations from a separate config file
-global_progress_state = {"status": "idle", "progress": 0}
-
+@login_manager.user_loader
+def load_user(user_id):
+    user_id = int(user_id)
+    return next((user for user in users if user.id == user_id), None)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -105,7 +109,9 @@ def login():
         user = next((user for user in users if user.username == username), None)
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
+            session['username'] = username  # Set username in session if authentication is successful
             session['_flashes'] = []  # Clear all flash messages
+            user.authenticate()  # Authenticate the user
             return redirect(url_for("index"))
         else:
             flash("Invalid username or password")
@@ -158,6 +164,7 @@ def logout():
             flash(f"An error occurred while Unlearning: {e}", "error")
         
         time.sleep(per_step_delay)
+        session.pop('username', None)        
         
     except Exception as e:
         flash(f"An error occurred during logout: {e}", "error")
@@ -166,17 +173,24 @@ def logout():
 
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    user_id = int(user_id)
-    return next((user for user in users if user.id == user_id), None)
+# @app.route("/")
+# @login_required
+# def index():
+#     if not current_user.is_authenticated:  # extra check to ensure user is authenticated
+#         return redirect(url_for('login'))  # Redirect to login page
 
+#     files = os.listdir(app.config["UPLOAD_FOLDER"])
+#     user = current_user.username  # Get username from current_user proxy
+
+#     return render_template("index.html", files=files, current_user=user)
 
 @app.route("/")
 @login_required
 def index():
     files = os.listdir(app.config["UPLOAD_FOLDER"])
-    return render_template("index.html", files=files, current_user=current_user)
+    user = current_user.username
+    return render_template("index.html", files=files, current_user=user)
+
 
 
 @app.route("/upload", methods=["GET", "POST"])
@@ -275,7 +289,7 @@ def process_directory():
             flash("No files in the Data Directory to process", "error")
             return redirect(url_for("index"))
         global_progress_state["progress"] = 40
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=256, chunk_overlap=10) # choice of chunk size impacted by embedding model capabilities.
 
         texts = text_splitter.split_documents(documents)
         valid_documents = [
@@ -323,9 +337,9 @@ def process_directory():
         return jsonify(success=False, message=f"An error occurred: {e}"), 500
 
 
-@app.route("/delete_files", methods=["POST"])  # Update as necessary to match your HTML
+@app.route("/delete_files", methods=["POST"])  
 @login_required
-def delete_files():  # Update function name to match route
+def delete_files():  
     global global_progress_state
     flash("Beginning removal of files.", "success")
     key = request.form.get("delete_key")
@@ -402,30 +416,39 @@ def save_file_info(file_names):
 
 # Protected URL path (change to an actual secure path in production)
 SECRET_PATH = '/secret-restart'
+SECRET_KEY = 'key'
 LOG_DIR_BASE = './ACTIVE_LOGS'
+
 
 @app.route(SECRET_PATH, methods=['POST'])
 def restart_chainlit():
     try:
-        # It’s better to add an authentication check here
-        if not request.is_authenticated:
-            abort(401)
-
+        key = request.form.get("restart_key")
+        if not key or key != SECRET_KEY:
+            error_message = "Invalid ChatSnap key"
+            logging.error(error_message)
+            return jsonify(success=False, message=error_message), 400  # Use 400 for Bad Request
+            
         chainlit_pid = subprocess.getoutput("pgrep -f 'chainlit run deploy.py -w'")
-        data_manager_pid = subprocess.getoutput("pgrep -f 'python3 dataManager.py'")
-
+        
         if chainlit_pid.isdigit():
             subprocess.run(['kill', '-9', chainlit_pid])
+            
+        # Use Popen to start the process and return immediately
+        subprocess.Popen(["chainlit", "run", "deploy.py", "-w"])
+        
+        # Checking again whether the process is started or not
+        chainlit_pid = subprocess.getoutput("pgrep -f 'chainlit run deploy.py -w'")
+        
+        if chainlit_pid.isdigit():  # Chainlit started successfully
+            response = Response("Processes have been restarted.")
+            response.headers['X-Success'] = 'true'
+            return response
         else:
-            logging.warning(f"No chainlit process found: {chainlit_pid}")
-
-        if data_manager_pid.isdigit():
-            subprocess.run(['kill', '-9', data_manager_pid])
-        else:
-            logging.warning(f"No dataManager process found: {data_manager_pid}")
-
-        return jsonify(success=True, message="Processes have been restarted.")
-
+            error_message = "Failed to start the chainlit process"
+            logging.error(error_message)
+            return jsonify(success=False, message=error_message), 500  # Use 500 for Internal Server Error
+            
     except Exception as e:
         logging.error(f"Error occurred: {e}")
         return jsonify(success=False, message=f"An error occurred: {str(e)}"), 500

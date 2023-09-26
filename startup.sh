@@ -66,5 +66,21 @@ echo "dataManager process started with PID: $DATAMANAGER_PID"
 echo "Chainlit output is being logged to '$LOG_DIR/chainlit_output.log' and errors to '$LOG_DIR/chainlit_error.log'."
 echo "dataManager output is being logged to '$LOG_DIR/fileupload_output.log' and errors to '$LOG_DIR/fileupload_error.log'."
 
+# Define the current date, time, and username
+CURRENT_DATE_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+USERNAME=$(whoami)
+
+# Define the entry for overwriting lines and for appending as a table row
+ENTRY="### Application Start Log\n- Application Start Date and Time: $CURRENT_DATE_TIME\n- Username: $USERNAME\n- Log Store: $LOG_DIR"
+TABLE_ENTRY="| $CURRENT_DATE_TIME | $USERNAME | $LOG_DIR |"
+
+# Overwrite lines 3-6 in the chainlit.md file
+sed -i "3,6c\\
+$ENTRY
+" ./chainlit.md
+
+# Append the data as a new row in the table at the end of the chainlit.md file
+echo -e "$TABLE_ENTRY" >> ./chainlit.md
+
 # Exit the script
 exit 0

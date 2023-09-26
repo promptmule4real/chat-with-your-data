@@ -15,7 +15,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
         <style>
-            body {
+            <!-- body {
                 font-family: 'Roboto', sans-serif;
                 background-color: #f5f5f5;
             }
@@ -25,6 +25,21 @@
             }
             .card {
                 overflow: hidden;
+            } -->
+
+            body {
+                font-family: 'Roboto', sans-serif;
+                background-color: #f5f5f5;
+            }
+            .container {
+                margin-top: 50px;
+                padding: 20px;
+                width: 50%; /* Set to 50% of the parent container's width */
+                margin: auto; /* Center the container */
+            }
+            .card {
+                overflow: hidden;
+                width: 100%; /* It takes the full width of its parent container, .container */
             }
             .card-content {
                 padding: 24px;
@@ -45,7 +60,7 @@
                 top: 10px;
                 right: 10px;
                 z-index: 1001; /* Higher z-index to ensure it's above other elements */
-                background-color: #4CAF50; /* Materialize Green */
+                background-color: #e1ece1; /* Materialize Green */
             }
 
             .logout-button {
@@ -54,15 +69,49 @@
                 right: 10px;
                 z-index: 1002; /* Highest z-index to ensure it's above other elements */
             }
+            .user-info-form {
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                width: 250px;
+                z-index: 1000;
+            }
+
+            .card.transparent {
+                background-color: transparent;
+                border: none;
+                box-shadow: none;
+            }
+
+            .card-title {
+                color: #333;
+                font-size: 18px;
+                margin: 0;
+                padding: 10px;
+            }
+
+            .user-card-content {
+                padding: 10px;
+            }
+
+            .input-field p {
+                color: #333;
+                margin: 0;
+            }
+
+            #username {
+                font-weight: bold;
+                color: #130443; /* You can choose a color that fits your design */
+            }
         </style>
     </head>
     <body>
 
+        <!-- Static Cards for Header -->
         <!-- Start ChatSnap Form -->
-        <form action="/secret-restart" method="post" onsubmit="return confirm('Are you sure you want to restart the service?');" class="start-chatsnap-form">
-            <div class="input-field">
-                <input type="password" name="restart_key" id="restart_key" placeholder="Enter ChatSnap key here" required/>
-                <label for="restart_key">Start Key:</label>
+            <form action="/secret-restart" method="post" onsubmit="return confirm('Are you sure you are ready to logout?');" class="start-chatsnap-form"> <div class="input-field">
+                <input type="password" name="restart_key" id="restart_key" placeholder="ChatSnap key here" required/>
+                <label for="restart_key">ChatSnap Key:</label>
                 <span class="material-icons toggle-password" onclick="togglePasswordVisibility('restart_key', 'toggle_restart');" id="toggle_restart">visibility</span>
             </div>
             <button type="submit" class="btn waves-effect waves-light green start-chatsnap-btn">Start ChatSnap</button>
@@ -75,39 +124,51 @@
             <a class="btn waves-effect waves-light logout-button" href="{{ url_for('login') }}">Login</a>
         {% endif %}
 
+        <!-- User Info Card -->
+        <div id="user-info-card" class="user-info-form">
+            <div class="card transparent">
+                <h4 class="card-title">ChatSnap</h4>
+                <div class="user-card-content">
+                    <div class="input-field">
+                        <p>Welcome,
+                            <span id="username">{{ current_user }}.</span>
+                        </p>
+                        <br>
+                        Files Uploaded:
+                        <div class="card-content">
+                            <ul>
+                                {% if files %}
+                                    {% for file in files %}
+                                        <li>
+                                            <span>{{ file }}</span>
+                                        </li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li>No files loaded</li>
+                                {% endif %}
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
         <div class="container">
             <div class="card">
                 <div class="card-content">
-                    <span class="card-title">ChatSnap Private Data Manager</span>
-                    <blockquote>
+                    <span class="card-title">Private Data Manager</span>
                         <i>Where privacy comes first.</i>
+                    <blockquote>
+                        <i>Instuctions are at the bottom of this page.</i>
                     </blockquote>
-                    <p>This tool allows you to upload your files to ChatSnap. It's easy:</p>
-                    <ul>
-                        <li>1. Locate the upload form on this page.</li>
-                        <li>2. Select your desired PDF file or files.</li>
-                        <li>
-                            3. Ensure each file is in PDF format and is below the 16 MB size
-                                                                                                                                                                                                                                                                                                                                                    limit.
-                        </li>
-                        <li>
-                            4. Click the "Upload" button to begin the transfer to our server.
-                        </li>
-                        <li>
-                            5. Click the "Learn" button to let ChatSnap learn from your files
-                                                                                                                                                                                                                                                                                                                                                    before chatting.
-                        </li>
-                        <li>
-                            Afterwards, start your
-                            <a href="http://app.chatsnap.me:8000/" target="_blank">chat</a>
-                        </li>
-                        <li>
-                            You can also have ChatSnap Unlearn or just delete a file you don't
-                                                                                                                                                                                                                                                                                                                                                    want included in the learning process.
-                        </li>
-                    </ul>
-                    <p>Thank you for using ChatSnap!</p>
+                    <!-- Progress Bar -->
+                    <div id="progress-bar-container">
+                        <div id="progress-bar"></div>
+                        <div id="progress-text">0%</div>
+                    </div>
+
                 </div>
             </div>
 
@@ -212,18 +273,61 @@
                 </div>
             </div>
         </div>
+        <div class="container">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Private Data Manager</span>
+                    <blockquote>
+                        <i>Where privacy comes first.</i>
+                    </blockquote>
+                    <p>This tool allows you to upload your files to ChatSnap. It's easy:</p>
+                    <ul>
+                        <li>1. Locate the upload form on this page.</li>
+                        <li>2. Select your desired PDF file or files.</li>
+                        <li>
+                            3. Ensure each file is in PDF format and is below the 16 MB size
+                                                                                                                                                                                                                                                                                                                                                                                                                                        limit.
+                        </li>
+                        <li>
+                            4. Click the "Upload" button to begin the transfer to our server.
+                        </li>
+                        <li>
+                            5. Click the "Learn" button to let ChatSnap learn from your files
+                                                                                                                                                                                                                                                                                                                                                                                                                                        before chatting.
+                        </li>
+                        <li>
+                            Afterwards, start your
+                            <a href="http://app.chatsnap.me:8000/" target="_blank">chat</a>
+                        </li>
+                        <li>
+                            You can also have ChatSnap Unlearn or just delete a file you don't
+                                                                                                                                                                                                                                                                                                                                                                                                                                        want included in the learning process.
+                        </li>
+                    </ul>
+                    <p>Thank you for using ChatSnap!</p>
+                </div>
+            </div>
 
-        <!-- Progress Bar -->
-        <div id="progress-bar-container">
-            <div id="progress-bar"></div>
-            <div id="progress-text">0%</div>
-        </div>
 
-
-        <script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
             <script>
                 // JavaScript functions here
+                fetch(SECRET_PATH, {
+                    method: 'POST',
+                    // ... (other configurations, headers, body, etc.)
+                }).then(response => {
+                    if (response.headers.get('X-Success') === 'true') { // Open a new window or tab
+                        window.open('http://app.chatsnap.me:8000', '_blank');
+
+                        // Reload the current window
+                        window.location.reload();
+                    } else { // Handle the case where the response does not have the 'X-Success' header
+                        console.error('Failed to restart processes.');
+                    }
+                }).catch(error => { // Handle the error
+                    console.error('Error during the fetch operation:', error);
+                });
+
                 function validateFileSize() {
                     const files = document.getElementById("file").files;
                     let totalSize = 0;

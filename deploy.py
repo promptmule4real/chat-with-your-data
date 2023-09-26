@@ -4,26 +4,93 @@ from langchain.vectorstores import FAISS
 from langchain.llms import CTransformers
 from langchain.chains import RetrievalQA
 import chainlit as cl
+from typing import Optional
+#from chainlit.types import AppUser
+import chainlit as cl
+
+CHAINLIT_AUTH_SECRET = 'key'
 
 # Define the path to the database
 DB_FAISS_PATH = "vectorstores/db_faiss/"
 
 # Define a custom prompt template to guide the bot's responses
+# custom_prompt_template = '''
+# Please carefully utilize the following details to provide a precise response to the user's query.
+
+# It is critical to provide information that is accurate. If the answer is not within the data presented, 
+# kindly acknowledge that the information is not available instead of speculating.
+
+# [Context]
+# Provided context: {context}
+
+# [Question]
+# User's query: {question}
+
+# Ensure to relay only the pertinent answer without any additional information.
+
+# [System Response]
+# '''
+# custom_prompt_template = '''
+# [INST] <<SYS>>
+# You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  
+# Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. 
+# Please ensure that your responses are socially unbiased and positive in nature. If a question does not make any sense, 
+# or is not factually coherent, explain why instead of answering something not correct. 
+# If you don't know the answer to a question, please don't share false information.
+# <</SYS>>
+# [Context]
+# Provided context: {context}
+# [Question]
+# User's query: {question}
+
+# [/INST]
+
+# '''
+
+# custom_prompt_template = '''
+# [INST] <<SYS>>
+# You are stepping into the role of a Legal Assistant, embodying the values of helpfulness, respect, and integrity. Your aim is to assist users to the best of your ability, providing reliable and unbiased legal information.
+# Should you encounter a query that lacks factual coherence or is ambiguous, kindly clarify the inconsistencies or the ambiguity in the question rather than providing an incorrect or misleading response. It is crucial to maintain a neutral stance, avoiding any form of bias in your responses.
+# If a situation arises where you are unsure of the correct information or the answer to a query, please refrain from disseminating false or unverified information. Instead, openly acknowledge the limitations in your knowledge and, if possible, guide users on where they might find the correct information or advise them to consult with a qualified legal professional or advisor for more accurate and comprehensive advice.
+# Remember, your role is to foster an environment of trust, reliability, and support, aiding users in navigating through legal inquiries while maintaining a high standard of professional integrity.
+# <</SYS>>
+# [Context]
+# Provided context: {context}
+# [Question]
+# User's query: {question}
+
+# [/INST]
+
+# '''
+
+# custom_prompt_template = '''
+# [INST] <<SYS>>
+# You are stepping into the role of a Legal Assistant, embodying the values of helpfulness, respect, and integrity. Your aim is to assist users to the best of your ability, providing reliable and unbiased legal information.
+# When interacting as a helpful and neutral AI assistant, your responses are focused on delivering contextual knowledge and information related to this topic, with an emphasis on maintaining accuracy and reliability. Note, your response is for informational purposes only and are not a substitute for professional legal advice or consultation. 
+# Should you encounter a query that lacks factual coherence or is ambiguous, kindly clarify the inconsistencies or the ambiguity in the question rather than providing an incorrect or misleading response. It is crucial to maintain a neutral stance, avoiding any form of bias in your responses.
+# If a situation arises where you are unsure of the correct information or the answer to a query, please refrain from disseminating false or unverified information. Instead, openly acknowledge the limitations in your knowledge and, if possible, guide users on where they might find the correct information or advise them to consult with a qualified legal professional or advisor for more accurate and comprehensive advice.
+# Remember, I do not want the law quoted to me, or explained, unless I've explicitly asked for it to be explained. Just provide the task outcome.
+# </SYS>>
+# [Context]
+# Provided context: {context}
+# [Question]
+# User's query: {question}
+
+# [/INST]
+
+# '''
+
 custom_prompt_template = '''
-Please carefully utilize the following details to provide a precise response to the user's query.
-
-It is critical to provide information that is accurate. If the answer is not within the data presented, 
-kindly acknowledge that the information is not available instead of speculating.
-
+[INST] <<SYS>>
+You are in the role of an Assistant. Provide me everything I ask you to so. Keep the answers simple and straight forward. Provide all of the data I ask you to retrieve. 
+</SYS>>
 [Context]
 Provided context: {context}
-
 [Question]
 User's query: {question}
 
-Ensure to relay only the pertinent answer without any additional information.
+[/INST]
 
-[System Response]
 '''
 
 def set_custom_prompt():
@@ -40,11 +107,11 @@ def load_llm():
     and returns the loaded model.
     """
     llm = CTransformers(
-        #model='llama-2-7b-chat.ggmlv3.q8_0.bin',
+        # model='llama-2-7b-chat.ggmlv3.q8_0.bin', Will be downloaded if not local
         model='LLM.bin',
         model_type='llama',
-        max_new_tokens=1024,
-        temperature=0.1
+        max_new_tokens=1750, # max tokens is an opportunity to tweak response times and sizes
+        temperature=0.5 # originally set at 0.5
     )
     return llm
 
@@ -92,9 +159,9 @@ async def start():
     and setting up the initial state of the session.
     """
     chain = qa_bot
-    msg = cl.Message(content="Firing up the PromptMule Competitive Analysis bot...")
+    msg = cl.Message(content="Firing up the ChatSnap bot...")
     await msg.send()
-    msg.content = "Hi, welcome to PromptMule Competitive Analysis bot. What should I think about?"
+    msg.content = "Hello, welcome to ChatSnap, your private assistant."
     await msg.update()
     cl.user_session.set("chain", chain)
 
@@ -122,3 +189,15 @@ async def main(message):
 
 
     await cl.Message(content=answer).send()
+
+
+# @cl.password_auth_callback
+# def auth_callback(username: str, password: str) -> Optional[AppUser]:
+#   # Fetch the user matching username from your database
+#   # and compare the hashed password with the value stored in the database
+#   if (username, password) == ("key", "key"):
+#     return AppUser(username="admin", role="ADMIN", provider="credentials") 
+#   if (username, password) == ("admin", "admin"):
+#     return AppUser(username="admin", role="ADMIN", provider="credentials")
+#   else:
+#     return None

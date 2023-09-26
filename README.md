@@ -1,47 +1,39 @@
-# CopyBot User Manual
+# ChatSnap User Manual
 
-Welcome to **CopyBot** – a simplified method to set up and interact with the chatbot application.
+Welcome to **ChatSnap** – a simplified method to set up and interact with the chatbot application.
 
 ## Table of Contents
 - [Application Details](#application-details)
 - [Getting Started](#1-getting-started)
-- [Execution Details](#2-execution-details)
-- [Managing Processes](#3-managing-processes)
-- [Viewing Logs](#4-viewing-logs)
-- [Requirements](#5-requirements)
-- [Ending Your Session](#6-ending-your-session)
-- [Tips for an Optimal Experience](#tips-for-an-optimal-experience)
+- [Managing Processes](#2-managing-processes)
+- [Viewing Logs](#3-viewing-logs)
+- [Requirements](#4-requirements)
+- [Ending Your Session](#5-ending-your-session)
 
 ---
 
+## Application Details
+
+This repository contains two scripts, `go.sh` and `bot.sh`, which are part of the ChatSnap application. The first script, `go.sh`, manages data uploads and logging, while the second script, `bot.sh`, interacts with a chatbot.
+
 ## 1. Getting Started
 
-This guide is intended to help you run the **CopyBot** application and manage its processes.
+This guide is intended to help you run the ChatSnap application and manage its processes.
 
-## 2. Execution Details
+## 2. Managing Processes
 
-To start the application:
+The scripts (`go.sh` and `bot.sh`) will first check for any existing processes (`chainlit` and `dataManager.py`) and will stop them before starting fresh instances. This ensures that there are no conflicts with previously running applications.
 
-1. Navigate to the root directory of the project.
-2. Run the script using the following command:
-   ```bash
-   ./startup.sh
-   ```
+The `chainlit` process and `dataManager.py` script will then be run in the background. The scripts display the PIDs (Process IDs) for both processes for your reference.
 
-## 3. Managing Processes
-
-The script will first check for any existing processes (`chainlit` and `dataManager.py`) and will stop them before starting fresh instances. This ensures that there are no conflicts with previously running applications.
-
-The `chainlit` process and `dataManager.py` script will then be run in the background. The script will display the PIDs (Process IDs) for both processes for your reference.
-
-## 4. Viewing Logs
+## 3. Viewing Logs
 
 Logs for both processes are stored in a dedicated `ACTIVE_LOGS` directory. Inside, individual log directories are named by the current date and timestamp.
 
 The output and error logs for both `chainlit` and `dataManager.py` can be found within these directories, named as follows:
 
-- `chainlit_output.log` and `chainlit_error.log`
-- `fileupload_output.log` and `fileupload_error.log`
+- `chainlit_output.log` and `chainlit_error.log` for `bot.sh`
+- `fileupload_output.log` and `fileupload_error.log` for `go.sh`
 
 To monitor the logs in real-time, you can use commands like `tail -f`:
 
@@ -51,31 +43,33 @@ tail -f ACTIVE_LOGS/[YOUR_TIMESTAMP]/chainlit_output.log
 
 Replace `[YOUR_TIMESTAMP]` with the specific directory timestamp.
 
-## 5. Requirements
+## 4. Requirements
 
-Before executing the script, ensure you have the necessary dependencies installed:
+Before executing the scripts, ensure you have the necessary dependencies installed:
 
 1. The `chainlit` command must be available in your shell.
 2. Python3 should be installed.
 3. All the Python libraries mentioned in the `requirements.txt` file should be installed. As this file is already a part of the repository, you can set it up using:
+
    ```bash
    pip install -r requirements.txt
    ```
 
-## 6. Ending Your Session
+## 5. Ending Your Session
 
 When you wish to stop the processes:
 
-1. Use the provided PIDs by the script to kill the processes.
+1. Use the provided PIDs by the scripts to kill the processes.
    ```bash
    kill [CHAINLIT_PID]
    kill [DATAMANAGER_PID]
    ```
+   
 ---
 
-### CopyBot Chat Data Manager Guide
+### ChatSnap Manager Guide
 
-The **CopyBot Chat Data Manager** is a user-friendly web portal that facilitates the management of chat data files and embeddings. With a sleek design and easy-to-follow instructions, this guide will walk you through its primary functionalities.
+The **ChatSnap Manager** is a user-friendly web portal that facilitates the management of chat data files and embeddings. With a sleek design and easy-to-follow instructions, this guide will walk you through its primary functionalities.
 
 #### **Uploading Files**
 1. **Navigate to the Files Upload Card**: This card has a section where you can provide your unique `Upload Key`.
@@ -104,13 +98,13 @@ The **CopyBot Chat Data Manager** is a user-friendly web portal that facilitates
 - **Progress Bar**: While uploading or processing, a progress bar displays the percentage of completion.
 
 #### **Starting a Chat**:
-To start chatting, use the provided link: [http://prompt.com:8000/](http://prompt.com:8000/).
+To start chatting, use the provided link: [http://app.chatsnap.me](http://app.chatsnap.me).
 
 #### **Technical Details**:
 - **Frontend**: The platform utilizes the Materialize CSS framework to ensure a responsive and modern design.
 - **Backend**: (Not provided, but likely a server framework that processes the form submissions and manages the files.)
 
 #### **Wrap Up**:
-Thank you for choosing **CopyBot**. Always ensure that you keep your keys confidential and follow the outlined steps for a smooth experience.
+Thank you for choosing **ChatSnap**. Always ensure that you keep your keys confidential and follow the outlined steps for a smooth experience.
 
 ---

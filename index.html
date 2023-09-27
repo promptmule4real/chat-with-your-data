@@ -11,31 +11,17 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
-
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
         <style>
-            <!-- body {
-                font-family: 'Roboto', sans-serif;
-                background-color: #f5f5f5;
-            }
-            .container {
-                margin-top: 50px;
-                padding: 20px;
-            }
-            .card {
-                overflow: hidden;
-            } -->
+
 
             body {
                 font-family: 'Roboto', sans-serif;
                 background-color: #f5f5f5;
             }
             .container {
-                margin-top: 50px;
+                margin: auto;
                 padding: 20px;
-                width: 50%; /* Set to 50% of the parent container's width */
-                margin: auto; /* Center the container */
+                width: 50%; /* Set to 50% of the parent container's width */ /* Center the container */
             }
             .card {
                 overflow: hidden;
@@ -65,7 +51,7 @@
 
             .logout-button {
                 position: fixed;
-                top: 120px; /* Adjust based on the height of the .start-chatsnap-form and desired spacing */
+                top: 10px; /* Adjust based on the height of the .start-chatsnap-form and desired spacing */
                 right: 10px;
                 z-index: 1002; /* Highest z-index to ensure it's above other elements */
             }
@@ -108,21 +94,17 @@
     <body>
 
         <!-- Static Cards for Header -->
-        <!-- Start ChatSnap Form -->
-            <form action="/secret-restart" method="post" onsubmit="return confirm('Are you sure you are ready to logout?');" class="start-chatsnap-form"> <div class="input-field">
-                <input type="password" name="restart_key" id="restart_key" placeholder="ChatSnap key here" required/>
-                <label for="restart_key">ChatSnap Key:</label>
-                <span class="material-icons toggle-password" onclick="togglePasswordVisibility('restart_key', 'toggle_restart');" id="toggle_restart">visibility</span>
-            </div>
-            <button type="submit" class="btn waves-effect waves-light green start-chatsnap-btn">Start ChatSnap</button>
-        </form>
-
         <!-- Auth Buttons -->
-        {% if current_user.is_authenticated %}
-            <a class="btn waves-effect waves-light red darken-2 logout-button" href="{{ url_for('logout') }}">Logout</a>
+
+            {% if current_user.is_authenticated %}<a class="btn waves-effect waves-light red darken-2 logout-button" href="{{ url_for('logout') }}"> LOGOUT</a>
         {% else %}
-            <a class="btn waves-effect waves-light logout-button" href="{{ url_for('login') }}">Login</a>
+            <a class="btn waves-effect waves-light logout-button" href="{{ url_for('login') }}">
+                LOGOUT
+                {{ current_user }}
+            </a>
         {% endif %}
+
+        
 
         <!-- User Info Card -->
         <div id="user-info-card" class="user-info-form">
@@ -134,7 +116,7 @@
                             <span id="username">{{ current_user }}.</span>
                         </p>
                         <br>
-                        Files Uploaded:
+                        Files you have uploaded:
                         <div class="card-content">
                             <ul>
                                 {% if files %}
@@ -159,7 +141,7 @@
             <div class="card">
                 <div class="card-content">
                     <span class="card-title">Private Data Manager</span>
-                        <i>Where privacy comes first.</i>
+                    <i>Where privacy comes first.</i>
                     <blockquote>
                         <i>Instuctions are at the bottom of this page.</i>
                     </blockquote>
@@ -286,22 +268,22 @@
                         <li>2. Select your desired PDF file or files.</li>
                         <li>
                             3. Ensure each file is in PDF format and is below the 16 MB size
-                                                                                                                                                                                                                                                                                                                                                                                                                                        limit.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                limit.
                         </li>
                         <li>
                             4. Click the "Upload" button to begin the transfer to our server.
                         </li>
                         <li>
                             5. Click the "Learn" button to let ChatSnap learn from your files
-                                                                                                                                                                                                                                                                                                                                                                                                                                        before chatting.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                before chatting.
                         </li>
                         <li>
                             Afterwards, start your
-                            <a href="http://app.chatsnap.me:8000/" target="_blank">chat</a>
+                            <a href="https://app.chatsnap.me:8000/" target="_blank">chat</a>
                         </li>
                         <li>
                             You can also have ChatSnap Unlearn or just delete a file you don't
-                                                                                                                                                                                                                                                                                                                                                                                                                                        want included in the learning process.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                want included in the learning process.
                         </li>
                     </ul>
                     <p>Thank you for using ChatSnap!</p>
@@ -312,21 +294,30 @@
             <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
             <script>
                 // JavaScript functions here
-                fetch(SECRET_PATH, {
-                    method: 'POST',
-                    // ... (other configurations, headers, body, etc.)
-                }).then(response => {
-                    if (response.headers.get('X-Success') === 'true') { // Open a new window or tab
-                        window.open('http://app.chatsnap.me:8000', '_blank');
 
-                        // Reload the current window
+                function startSecret() {
+                    const url = 'https://app.chatsnap.me/secret-start'; // Use https if the server supports it
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Or whatever content type is needed
+                            // ...other headers if needed
+                        },
+                        // body: JSON.stringify({ key: value }), // If you need to send a request body, uncomment and modify this line
+                    }).then(response => response.json()) // assuming server responds with json.then(data => {
+                    if (data.success) { // Check the response from the server, 'data.success' is just a placeholder, modify according to actual response
+                        window.open('https://app.chatsnap.me:8000', '_blank');
                         window.location.reload();
-                    } else { // Handle the case where the response does not have the 'X-Success' header
-                        console.error('Failed to restart processes.');
+                    } else {
+                        console.error('Failed to start secret.');
                     }
-                }).catch(error => { // Handle the error
-                    console.error('Error during the fetch operation:', error);
-                });
+                };
+
+                // Attach this function to some event, like a button click, if needed
+                document.getElementById('someButtonId').addEventListener('click', startSecret);
+
 
                 function validateFileSize() {
                     const files = document.getElementById("file").files;
@@ -390,7 +381,8 @@
                 document.addEventListener("DOMContentLoaded", function () {
                     M.AutoInit();
                 });
+
             </script>
         </body>
     </body>
-</html></body></html>
+</html>
